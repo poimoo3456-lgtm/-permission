@@ -2,11 +2,11 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>ขออนุญาตไปเที่ยว 💕</title>
+<title>ระบบขออนุญาตไปเที่ยว 💕</title>
 <style>
 body{
-    font-family: Arial, sans-serif;
-    background: #ffe6f0;
+    font-family: Arial;
+    background:#ffe6f2;
     text-align:center;
     padding:20px;
 }
@@ -21,7 +21,7 @@ body{
 input{
     width:90%;
     padding:8px;
-    margin:8px 0;
+    margin:8px;
 }
 button{
     padding:10px 15px;
@@ -30,23 +30,13 @@ button{
     border-radius:10px;
     cursor:pointer;
 }
-.primary{
-    background:#ff4da6;
-    color:white;
-}
-.allow{
-    background:#4CAF50;
-    color:white;
-}
-.deny{
-    background:#f44336;
-    color:white;
-}
+.primary{ background:#ff4da6; color:white; }
+.allow{ background:#4CAF50; color:white; }
+.deny{ background:#f44336; color:white; }
 .linkBox{
     background:#f2f2f2;
     padding:10px;
     word-break:break-all;
-    margin-top:10px;
 }
 </style>
 </head>
@@ -58,87 +48,68 @@ button{
 <input type="text" id="place" placeholder="ชื่อสถานที่">
 <input type="text" id="withWho" placeholder="ไปกับใครบ้าง">
 <input type="time" id="backTime">
-
 <br>
 <button class="primary" onclick="createLink()">ขออนุญาต</button>
 
-<div id="linkArea"></div>
-<div id="statusArea"></div>
-
+<div id="output"></div>
 </div>
 
 <div class="box" id="approvePage" style="display:none;">
 <h2>📩 คำขออนุญาต</h2>
 <p id="showData"></p>
-
-<button class="allow" onclick="sendResult('อนุญาต')">อนุญาต 💚</button>
-<button class="deny" onclick="sendResult('ไม่อนุญาต')">ไม่อนุญาต ❌</button>
-
+<button class="allow" onclick="sendBack('อนุญาต')">อนุญาต 💚</button>
+<button class="deny" onclick="sendBack('ไม่อนุญาต')">ไม่อนุญาต ❌</button>
 </div>
 
 <script>
 
-const urlParams = new URLSearchParams(window.location.search);
-const requestId = urlParams.get("id");
-const mode = urlParams.get("mode");
+const params = new URLSearchParams(window.location.search);
+const place = params.get("place");
+const withWho = params.get("with");
+const backTime = params.get("time");
+const result = params.get("result");
 
-if(mode === "approve"){
+if(place && withWho && backTime && !result){
     document.getElementById("requestPage").style.display="none";
     document.getElementById("approvePage").style.display="block";
 
-    const data = JSON.parse(localStorage.getItem(requestId));
-    if(data){
-        document.getElementById("showData").innerHTML =
-        "📍 สถานที่: " + data.place + "<br>" +
-        "👫 ไปกับ: " + data.withWho + "<br>" +
-        "⏰ เวลากลับ: " + data.backTime;
-    }
+    document.getElementById("showData").innerHTML =
+    "📍 สถานที่: "+place+"<br>"+
+    "👫 ไปกับ: "+withWho+"<br>"+
+    "⏰ เวลากลับ: "+backTime;
+}
+
+if(result){
+    document.getElementById("output").innerHTML =
+    "<h3>ผลการอนุญาต: "+result+"</h3>";
 }
 
 function createLink(){
-    const place = document.getElementById("place").value;
-    const withWho = document.getElementById("withWho").value;
-    const backTime = document.getElementById("backTime").value;
+    const p = document.getElementById("place").value;
+    const w = document.getElementById("withWho").value;
+    const t = document.getElementById("backTime").value;
 
-    const id = Date.now().toString();
+    const link = window.location.origin + window.location.pathname +
+    "?place="+encodeURIComponent(p)+
+    "&with="+encodeURIComponent(w)+
+    "&time="+encodeURIComponent(t);
 
-    localStorage.setItem(id, JSON.stringify({
-        place,
-        withWho,
-        backTime,
-        status: "รอการอนุญาต"
-    }));
-
-    const link = window.location.origin + window.location.pathname + 
-                 "?mode=approve&id=" + id;
-
-    document.getElementById("linkArea").innerHTML =
-    "<div class='linkBox'>" + link + "</div>" +
+    document.getElementById("output").innerHTML =
+    "<div class='linkBox'>"+link+"</div>"+
     "<button onclick='copyLink(\""+link+"\")'>คัดลอกลิงก์</button>";
-
-    checkStatus(id);
 }
 
 function copyLink(link){
     navigator.clipboard.writeText(link);
-    alert("คัดลอกลิงก์แล้ว 💕");
+    alert("คัดลอกแล้ว 💕");
 }
 
-function sendResult(result){
-    const data = JSON.parse(localStorage.getItem(requestId));
-    data.status = result;
-    localStorage.setItem(requestId, JSON.stringify(data));
-    alert("ส่งคำตอบแล้ว 💌");
-}
+function sendBack(answer){
+    const backLink =
+    window.location.origin + window.location.pathname +
+    "?result="+encodeURIComponent(answer);
 
-function checkStatus(id){
-    setInterval(()=>{
-        const data = JSON.parse(localStorage.getItem(id));
-        if(data && data.status !== "รอการอนุญาต"){
-            document.getElementById("statusArea").innerHTML =
-            "<h3>ผลการอนุญาต: "+ data.status +"</h3>";
-        }
-    },1000);
+    window.location.href = backLink;
 }
 
 </script>
