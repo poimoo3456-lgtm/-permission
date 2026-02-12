@@ -2,116 +2,151 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>ระบบขออนุญาตไปเที่ยว 💕</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heart QR Generator 💖</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
 <style>
 body{
-    font-family: Arial;
-    background:#ffe6f2;
+    margin:0;
+    font-family:"Prompt",sans-serif;
+    background:linear-gradient(135deg,#ff9a9e,#fad0c4);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+.card{
+    background:#fff;
+    padding:25px;
+    border-radius:20px;
+    box-shadow:0 10px 25px rgba(0,0,0,.2);
+    width:380px;
     text-align:center;
-    padding:20px;
 }
-.box{
-    background:white;
-    padding:20px;
-    border-radius:15px;
-    max-width:400px;
-    margin:auto;
-    box-shadow:0 5px 15px rgba(0,0,0,0.2);
-}
-input{
-    width:90%;
-    padding:8px;
-    margin:8px;
+input,select,button{
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+    border-radius:10px;
+    border:1px solid #ddd;
 }
 button{
-    padding:10px 15px;
-    margin:5px;
+    background:#ff4d6d;
+    color:white;
     border:none;
-    border-radius:10px;
+    font-size:16px;
     cursor:pointer;
 }
-.primary{ background:#ff4da6; color:white; }
-.allow{ background:#4CAF50; color:white; }
-.deny{ background:#f44336; color:white; }
-.linkBox{
-    background:#f2f2f2;
-    padding:10px;
-    word-break:break-all;
+#qrFrame{
+    margin-top:20px;
+    padding:20px;
+    border-radius:25px;
+    position:relative;
+}
+
+/* หัวใจ */
+.heart::before,
+.heart::after{
+    content:"❤";
+    position:absolute;
+    font-size:22px;
+}
+
+.qr{
+    margin:auto;
 }
 </style>
 </head>
 <body>
 
-<div class="box" id="requestPage">
-<h2>💌 ขออนุญาตไปเที่ยว</h2>
+<div class="card">
+    <h2>QR กรอบหัวใจ 💕</h2>
+    <input type="text" id="text" placeholder="พิมพ์ข้อความบอกรัก">
 
-<input type="text" id="place" placeholder="ชื่อสถานที่">
-<input type="text" id="withWho" placeholder="ไปกับใครบ้าง">
-<input type="time" id="backTime">
-<br>
-<button class="primary" onclick="createLink()">ขออนุญาต</button>
+    <select id="templateSelect"></select>
 
-<div id="output"></div>
-</div>
+    <button onclick="generateQR()">สร้าง QR</button>
 
-<div class="box" id="approvePage" style="display:none;">
-<h2>📩 คำขออนุญาต</h2>
-<p id="showData"></p>
-<button class="allow" onclick="sendBack('อนุญาต')">อนุญาต 💚</button>
-<button class="deny" onclick="sendBack('ไม่อนุญาต')">ไม่อนุญาต ❌</button>
+    <div id="qrFrame"><div id="qrcode" class="qr"></div></div>
 </div>
 
 <script>
+const heartColors = [
+"#ff4d6d","#e63946","#ff006e","#ff758f","#ff8fa3",
+"#fb6f92","#ffb3c6","#c9184a","#a4133c","#590d22"
+];
 
-const params = new URLSearchParams(window.location.search);
-const place = params.get("place");
-const withWho = params.get("with");
-const backTime = params.get("time");
-const result = params.get("result");
+const bgColors = [
+"#fff0f3","#ffe5ec","#ffc2d1","#ffb3c6","#f8edeb",
+"#fde2e4","#e0fbfc","#f1faee","#edf6f9","#fff1e6"
+];
 
-if(place && withWho && backTime && !result){
-    document.getElementById("requestPage").style.display="none";
-    document.getElementById("approvePage").style.display="block";
-
-    document.getElementById("showData").innerHTML =
-    "📍 สถานที่: "+place+"<br>"+
-    "👫 ไปกับ: "+withWho+"<br>"+
-    "⏰ เวลากลับ: "+backTime;
+// สร้าง 50 แม่แบบ
+const templates=[];
+for(let i=0;i<50;i++){
+    templates.push({
+        heart: heartColors[i%heartColors.length],
+        bg: bgColors[i%bgColors.length],
+        border: heartColors[(i+3)%heartColors.length]
+    });
 }
 
-if(result){
-    document.getElementById("output").innerHTML =
-    "<h3>ผลการอนุญาต: "+result+"</h3>";
+const select=document.getElementById("templateSelect");
+templates.forEach((t,i)=>{
+    let op=document.createElement("option");
+    op.value=i;
+    op.text="แม่แบบหัวใจที่ "+(i+1);
+    select.add(op);
+});
+
+function generateQR(){
+    const text=document.getElementById("text").value||"รักเธอที่สุด 💖";
+    const t=templates[select.value];
+
+    const frame=document.getElementById("qrFrame");
+    const qrDiv=document.getElementById("qrcode");
+
+    qrDiv.innerHTML="";
+    frame.style.background=t.bg;
+    frame.style.border="6px solid "+t.border;
+    frame.className="heart";
+
+    // สุ่มตำแหน่งหัวใจ
+    frame.style.setProperty('--c', t.heart);
+    document.querySelectorAll(".heart::before");
+
+    new QRCode(qrDiv,{
+        text:text,
+        width:200,
+        height:200,
+        colorDark:"#000",
+        colorLight:t.bg
+    });
+
+    // สร้างหัวใจลอยรอบกรอบ
+    frame.innerHTML='<div id="qrcode" class="qr"></div>';
+    const qrNew=document.getElementById("qrcode");
+
+    new QRCode(qrNew,{
+        text:text,
+        width:200,
+        height:200,
+        colorDark:"#000",
+        colorLight:t.bg
+    });
+
+    for(let i=0;i<8;i++){
+        let heart=document.createElement("div");
+        heart.innerHTML="❤";
+        heart.style.position="absolute";
+        heart.style.color=t.heart;
+        heart.style.fontSize=(18+Math.random()*10)+"px";
+        heart.style.top=Math.random()*90+"%";
+        heart.style.left=Math.random()*90+"%";
+        frame.appendChild(heart);
+    }
 }
-
-function createLink(){
-    const p = document.getElementById("place").value;
-    const w = document.getElementById("withWho").value;
-    const t = document.getElementById("backTime").value;
-
-    const link = window.location.origin + window.location.pathname +
-    "?place="+encodeURIComponent(p)+
-    "&with="+encodeURIComponent(w)+
-    "&time="+encodeURIComponent(t);
-
-    document.getElementById("output").innerHTML =
-    "<div class='linkBox'>"+link+"</div>"+
-    "<button onclick='copyLink(\""+link+"\")'>คัดลอกลิงก์</button>";
-}
-
-function copyLink(link){
-    navigator.clipboard.writeText(link);
-    alert("คัดลอกแล้ว 💕");
-}
-
-function sendBack(answer){
-    const backLink =
-    window.location.origin + window.location.pathname +
-    "?result="+encodeURIComponent(answer);
-
-    window.location.href = backLink;
-}
-
 </script>
 
 </body>
